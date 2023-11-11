@@ -3,7 +3,10 @@ package com.demo.auth.config;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,24 +16,50 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.demo.auth.jwt.JwtAccessDeniedHandler;
+import com.demo.auth.jwt.JwtAuthenticationEntryPoint;
+
+import lombok.RequiredArgsConstructor;
+
 @EnableWebSecurity
+@Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+	
+	private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
+	
+	private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+	private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 	
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		
+		// CORS 옵션을 활성화 CorsConfigurationSource 빈등록 
 		http
 			.cors();
+		
+		// jwt 토큰 사용을 위한 설정
 		http
 	        .csrf().disable()
 	        .formLogin().disable()
 	        .httpBasic().disable()
 	        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-	         //CORS 옵션을 활성화 CorsConfigurationSource 빈등록 
 	        
+	        // 예외 처리
+            .and()
+            .exceptionHandling()
+            .authenticationEntryPoint(jwtAuthenticationEntryPoint) //401 에러 핸들링을 위한 설정
+            .accessDeniedHandler(jwtAccessDeniedHandler) // 403 에러 핸들링을 위한 설정
+            
+            // 접근 처리
 	        .and()
 	        .authorizeRequests()
-	        .antMatchers("/user/**").permitAll();
+	        .antMatchers("/user/**").permitAll()
+	        
+	        .and()
+	        .headers()
+	        .frameOptions()
+	        .sameOrigin();
 		
 		return http.build();
 		
