@@ -6,7 +6,9 @@
 <mapper namespace="com.demo.auth.member.dao.MemberDao">
 
 	<select id="findById" parameterType="String" resultType="com.demo.auth.member.domain.Member">
-		SELECT id, name, pwd, email, role
+		SELECT id, name, pwd, email
 		FROM member
-		WHERE id=#{id}	
+		WHERE id=#{id}
 	</select>
+
+</mapper>
