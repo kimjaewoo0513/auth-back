@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -19,14 +20,32 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	
+	private final AuthenticationManagerConfig authenticationManagerConfig;
+	
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		
-		// CORS 옵션을 활성화 CorsConfigurationSource 빈등록 
-		http
-			.cors();
-		
-		return http.build();
+		return http
+				.formLogin().disable()
+				.csrf().disable()
+				.cors()
+				.and()
+				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+				.and()
+				.apply(authenticationManagerConfig)
+				.and()
+				.httpBasic().disable()
+				.authorizeHttpRequests()
+				.requestMatchers(null).permitAll()
+				.mvcMatchers(null).permitAll()
+				.mvcMatchers(null).hasRole(null)
+				.mvcMatchers(null).hasRole(null)
+				.anyRequest().hasAnyRole()
+				.and()
+				.exceptionHandling()
+				.authenticationEntryPoint(null)
+				.and()
+				.build();
 		
 	}
 
