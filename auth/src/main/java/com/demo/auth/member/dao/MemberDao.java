@@ -11,4 +11,6 @@ public interface MemberDao {
 	
 	Member findById(String id);
 
+	Member addMember(Member member);
+
 }

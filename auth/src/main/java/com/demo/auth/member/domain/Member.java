@@ -6,7 +6,7 @@ import lombok.Data;
 public class Member {
 
 	private String id;
-	private String pwd;
+	private String password;
 	private String name;
 	private String email;
 
