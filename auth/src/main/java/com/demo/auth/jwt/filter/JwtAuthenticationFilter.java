@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	
-	private final AuthenticationManager authenticationManager;
+	//private final AuthenticationManager authenticationManager;
 
 	@Override
 	protected void doFilterInternal(  HttpServletRequest request

@@ -20,32 +20,37 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	
-	private final AuthenticationManagerConfig authenticationManagerConfig;
+	//private final AuthenticationManagerConfig authenticationManagerConfig;
 	
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		
 		return http
-				.formLogin().disable()
 				.csrf().disable()
 				.cors()
 				.and()
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-				.and()
-				.apply(authenticationManagerConfig)
-				.and()
-				.httpBasic().disable()
-				.authorizeHttpRequests()
-				.requestMatchers(null).permitAll()
-				.mvcMatchers(null).permitAll()
-				.mvcMatchers(null).hasRole(null)
-				.mvcMatchers(null).hasRole(null)
-				.anyRequest().hasAnyRole()
-				.and()
-				.exceptionHandling()
-				.authenticationEntryPoint(null)
-				.and()
 				.build();
+//		
+//		return http
+//				.formLogin().disable()
+//				.csrf().disable()
+//				.cors()
+//				.and()
+//				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//				.and()
+//				.apply(authenticationManagerConfig)
+//				.and()
+//				.httpBasic().disable()
+//				.authorizeHttpRequests()
+//				.requestMatchers(null).permitAll()
+//				.mvcMatchers(null).permitAll()
+//				.mvcMatchers(null).hasRole(null)
+//				.mvcMatchers(null).hasRole(null)
+//				.anyRequest().hasAnyRole()
+//				.and()
+//				.exceptionHandling()
+//				.authenticationEntryPoint(null)
+//				.and()
+//				.build();
 		
 	}
 
