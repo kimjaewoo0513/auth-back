@@ -1,63 +1,89 @@
 package com.demo.auth.member.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.demo.auth.member.dao.MemberDao;
+import com.demo.auth.jwt.util.JwtTokenizer;
 import com.demo.auth.member.domain.Member;
 import com.demo.auth.member.domain.Role;
+import com.demo.auth.member.dto.MemberLoginDto;
+import com.demo.auth.member.dto.MemberLoginResponseDto;
 import com.demo.auth.member.dto.MemberSignupDto;
 import com.demo.auth.member.dto.MemberSignupResponseDto;
 import com.demo.auth.member.exception.MemberException;
+import com.demo.auth.member.repository.MemberRepository;
+import com.demo.auth.member.repository.RoleRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberService {
 	
-	@Autowired
-	private MemberDao dao;
-	
+	private final JwtTokenizer jwtTokenizer;
 	private final PasswordEncoder passwordEncoder;
+	private final MemberRepository memberRepository;
+	private final RoleRepository roleRepository;
 	
-
 	@Transactional
 	public MemberSignupResponseDto addMember(MemberSignupDto memberSignupDto) {
+		log.info("###########   " + memberSignupDto.getEmail() + "   is enter service." );
+		
+		/* 가입 이메일 중복 검증
+		 * 409 Conflict는 리소스의 충돌을 의미하는 상태코드입니다. 
+		 * ID 중복이라는 것은 결국 ID라는 PK 자원을 점유한 것에 대한 충돌이기 때문에 
+		 * 이 상태코드가 가장 적합하다고 생각하여 409 상태코드를 반영하기로 했습니다.
+		 */
+		if(memberRepository.findByEmail(memberSignupDto.getEmail()) != null){
+			throw new MemberException("###########   중복 이메일 존재.", HttpStatus.CONFLICT);
+		}
 
 		Member member = new Member();
 		member.setName(memberSignupDto.getName());
 		member.setEmail(memberSignupDto.getEmail());
-		member.setPassword(passwordEncoder.encode( memberSignupDto.getPassword() ));
+		member.setPassword(passwordEncoder.encode( memberSignupDto.getPassword()));
 		
-		Role userRole = dao.getRoleByName("ROLE_USER");
-		member.addRole(userRole);
-		
-		// 아이디 중복 확인
-		isExistUserId(member.getEmail());
-		dao.addMember(member);
+		Optional<Role> userRole = roleRepository.findByName("ROLE_USER");
+        member.addRole(userRole.get());
+        Member saveMember = memberRepository.save(member);
 
-		Member afterAddMember = dao.findByEmail(member.getEmail());
-		dao.addMemberRole(afterAddMember.getMemberId(),userRole.getRoleId());
-		
-		MemberSignupResponseDto memberSignupResponseDto = new MemberSignupResponseDto();
-		memberSignupResponseDto.setMemberId(afterAddMember.getMemberId());
-		memberSignupResponseDto.setEmail(afterAddMember.getEmail());
-		memberSignupResponseDto.setName(afterAddMember.getName());
-		memberSignupResponseDto.setRegdate(afterAddMember.getRegdate());
+        MemberSignupResponseDto memberSignupResponseDto = new MemberSignupResponseDto();
+        memberSignupResponseDto.setMemberId(saveMember.getMemberId());
+        memberSignupResponseDto.setName(saveMember.getName());
+        memberSignupResponseDto.setRegdate(saveMember.getRegdate());
+        memberSignupResponseDto.setEmail(saveMember.getEmail());
 		
 		return memberSignupResponseDto;
 		
 	}
 	
-	private void isExistUserId(String email) {
-		Member result = dao.findByEmail(email);
-		if (result != null) {
-			throw new MemberException("이미 사용중인 아이디입니다.", HttpStatus.BAD_REQUEST);
-		}
+	public MemberLoginResponseDto login(MemberLoginDto memberLoginDto) {
+		log.info("###########   " + memberLoginDto.getEmail() + "   is enter service." );
+		
+		// email이 없을 경우 Exception이 발생한다. Global Exception에 대한 처리가 필요하다.
+        Member member = memberRepository.findByEmail(memberLoginDto.getEmail());
+        if(!passwordEncoder.matches(loginDto.getPassword(), member.getPassword())){
+            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+        }
+		
+		List<String> roles = memberLoginDto.getRoles().stream().map(Role::getName).collect(Collectors.toList());
+		
+		// JWT 토큰 생성
+        String accessToken = jwtTokenizer.createAccessToken(member.getMemberId(), member.getEmail(), roles);
+        String refreshToken = jwtTokenizer.createRefreshToken(member.getMemberId(), member.getEmail(), roles);
+		
+        log.info(accessToken);
+        log.info(refreshToken);
+		
+		return null;
 	}
 
 }

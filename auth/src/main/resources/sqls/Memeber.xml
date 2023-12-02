@@ -5,32 +5,5 @@
   
 <mapper namespace="com.demo.auth.member.dao.MemberDao">
 
-	<select id="findById" parameterType="String" resultType="com.demo.auth.member.domain.Member">
-		SELECT member_id, name, password, email, regdate
-		FROM member
-		WHERE member_id=#{id}
-	</select>
-	
-	<select id="findByEmail" parameterType="String" resultType="com.demo.auth.member.domain.Member">
-		SELECT member_id, name, password, email, regdate
-		FROM member
-		WHERE email=#{email}
-	</select>
-	
-	<select id="getRoleByName" parameterType="String" resultType="com.demo.auth.member.domain.Role">
-		SELECT role_id, name 
-		FROM role
-		WHERE name = #{role}
-	</select>
-	
-	<insert id="addMember" parameterType="com.demo.auth.member.domain.Member" keyProperty="member_id">
-		INSERT INTO member(member_id, email, name, password, regdate)
-		VALUES(#{memberId}, #{email}, #{name}, #{password}, now())
-	</insert>
 
-	<insert id="addMemberRole" parameterType="com.demo.auth.member.domain.Member" >
-		INSERT INTO member_role(member_id, role_id)
-		VALUES(#{memberId}, #{roleId})
-	</insert>
-	
 </mapper>
