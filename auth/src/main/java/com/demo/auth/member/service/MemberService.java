@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.demo.auth.jwt.util.JwtTokenizer;
 import com.demo.auth.member.domain.Member;
+import com.demo.auth.member.domain.RefreshToken;
 import com.demo.auth.member.domain.Role;
 import com.demo.auth.member.dto.MemberLoginDto;
 import com.demo.auth.member.dto.MemberLoginResponseDto;
@@ -18,6 +19,7 @@ import com.demo.auth.member.dto.MemberSignupDto;
 import com.demo.auth.member.dto.MemberSignupResponseDto;
 import com.demo.auth.member.exception.MemberException;
 import com.demo.auth.member.repository.MemberRepository;
+import com.demo.auth.member.repository.RefreshTokenRepository;
 import com.demo.auth.member.repository.RoleRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class MemberService {
 	private final PasswordEncoder passwordEncoder;
 	private final MemberRepository memberRepository;
 	private final RoleRepository roleRepository;
+	private final RefreshTokenRepository refreshTokenRepository;
 	
 	@Transactional
 	public MemberSignupResponseDto addMember(MemberSignupDto memberSignupDto) {
@@ -65,25 +68,48 @@ public class MemberService {
 		
 	}
 	
+	@Transactional
 	public MemberLoginResponseDto login(MemberLoginDto memberLoginDto) {
 		log.info("###########   " + memberLoginDto.getEmail() + "   is enter service." );
 		
 		// email이 없을 경우 Exception이 발생한다. Global Exception에 대한 처리가 필요하다.
-        Member member = memberRepository.findByEmail(memberLoginDto.getEmail());
-        if(!passwordEncoder.matches(loginDto.getPassword(), member.getPassword())){
-            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+        Member member = findByEmail(memberLoginDto.getEmail());
+        if(!passwordEncoder.matches(memberLoginDto.getPassword(), member.getPassword())){
+        	throw new MemberException("###########   이메일이 존재하지 않음.", HttpStatus.UNAUTHORIZED);
         }
-		
-		List<String> roles = memberLoginDto.getRoles().stream().map(Role::getName).collect(Collectors.toList());
+        
+        List<String> roles = member.getRoles().stream().map(Role::getName).collect(Collectors.toList());
 		
 		// JWT 토큰 생성
         String accessToken = jwtTokenizer.createAccessToken(member.getMemberId(), member.getEmail(), roles);
         String refreshToken = jwtTokenizer.createRefreshToken(member.getMemberId(), member.getEmail(), roles);
 		
-        log.info(accessToken);
-        log.info(refreshToken);
+        log.info("##########   accessToken 생성  " + accessToken);
+        log.info("##########   refreshToken 생성  " + refreshToken);
+        
+        // 추후 redis 사용으로 변경
+        RefreshToken refreshTokenEntity = new RefreshToken();
+        refreshTokenEntity.setValue(refreshToken);
+        refreshTokenEntity.setMemberId(member.getMemberId());
+        refreshTokenEntity = refreshTokenRepository.save(refreshTokenEntity);
+        
+        log.info(refreshTokenEntity.toString());
+        
+        MemberLoginResponseDto loginResponse = MemberLoginResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .memberId(member.getMemberId())
+                .nickname(member.getName())
+                .build();
+        
+        log.info(loginResponse.toString());
 		
-		return null;
+		return loginResponse;
 	}
+	
+	@Transactional(readOnly = true)
+    public Member findByEmail(String email){
+        return memberRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다."));
+    }
 
 }

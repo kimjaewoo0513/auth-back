@@ -58,21 +58,37 @@ public class JwtTokenizer {
 	}
 
     /**
+     * 토큰에서 유저 아이디 얻기
+     */
+    public Long getMemberIdFromToken(String token) {
+        String[] tokenArr = token.split(" ");
+        token = tokenArr[1];
+        Claims claims = parseToken(token, accessSecret);
+        return Long.valueOf((Integer)claims.get("memberId"));
+    }
+    
+    public Claims parseAccessToken(String accessToken) {
+        return parseToken(accessToken, accessSecret);
+    }
+
+    public Claims parseRefreshToken(String refreshToken) {
+        return parseToken(refreshToken, refreshSecret);
+    }
+
+    public Claims parseToken(String token, byte[] secretKey) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey(secretKey))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+    
+    /**
      * @param secretKey - byte형식
      * @return Key 형식 시크릿 키
      */
     public static Key getSigningKey(byte[] secretKey) {
         return Keys.hmacShaKeyFor(secretKey);
     }
-
-	public Claims parseAccessToken() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public Claims parseAccessToken(String token) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 }

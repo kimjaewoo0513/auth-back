@@ -1,5 +1,8 @@
 package com.demo.auth.config;
 
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
+
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
@@ -11,46 +14,41 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.demo.auth.jwt.provider.CustomAuthenticationEntryPoint;
 
 import lombok.RequiredArgsConstructor;
 
-@EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 	
-	//private final AuthenticationManagerConfig authenticationManagerConfig;
+    private final AuthenticationManagerConfig authenticationManagerConfig;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 	
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		return http
-				.csrf().disable()
-				.cors()
-				.and()
-				.build();
-//		
-//		return http
-//				.formLogin().disable()
-//				.csrf().disable()
-//				.cors()
-//				.and()
-//				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//				.and()
-//				.apply(authenticationManagerConfig)
-//				.and()
-//				.httpBasic().disable()
-//				.authorizeHttpRequests()
-//				.requestMatchers(null).permitAll()
-//				.mvcMatchers(null).permitAll()
-//				.mvcMatchers(null).hasRole(null)
-//				.mvcMatchers(null).hasRole(null)
-//				.anyRequest().hasAnyRole()
-//				.and()
-//				.exceptionHandling()
-//				.authenticationEntryPoint(null)
-//				.and()
-//				.build();
+		http
+        .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .formLogin(httpSecurityFormLoginConfigurer -> httpSecurityFormLoginConfigurer.disable())
+        .csrf(csrf -> csrf.disable())
+        .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
+        .httpBasic(httpSecurityHttpBasicConfigurer -> httpSecurityHttpBasicConfigurer.disable())
+        .authorizeRequests()
+        .mvcMatchers("/members/signup", "/members/login", "/members/refreshToken").permitAll()
+        //.authorizeHttpRequests(httpRequests -> httpRequests
+                //.requestMatchers(CorsUtils::isPreFlightRequest).permitAll() // Preflight 요청은 허용한다. https://velog.io/@jijang/%EC%82%AC%EC%A0%84-%EC%9A%94%EC%B2%AD-Preflight-request
+                //.mvcMatchers( "/members/signup", "/members/login", "/members/refreshToken").permitAll()
+                //.mvcMatchers(GET,"/**").hasAnyRole( "USER")
+                //.mvcMatchers(POST,"/**").hasAnyRole("USER", "ADMIN")
+                //.anyRequest().hasAnyRole("USER", "ADMIN"))
+        .and()
+        .exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(customAuthenticationEntryPoint))
+        .apply(authenticationManagerConfig);
+
+		return http.build();
 		
 	}
 
