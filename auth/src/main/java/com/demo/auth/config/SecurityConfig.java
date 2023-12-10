@@ -45,7 +45,6 @@ public class SecurityConfig {
         .apply(authenticationManagerConfig);
 
 		return http.build();
-		
 	}
 
 	/* CORS */
