@@ -22,6 +22,7 @@ import com.demo.auth.jwt.provider.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
+@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 	
@@ -38,12 +39,7 @@ public class SecurityConfig {
         .httpBasic(httpSecurityHttpBasicConfigurer -> httpSecurityHttpBasicConfigurer.disable())
         .authorizeRequests()
         .mvcMatchers("/members/signup", "/members/login", "/members/refreshToken").permitAll()
-        //.authorizeHttpRequests(httpRequests -> httpRequests
-                //.requestMatchers(CorsUtils::isPreFlightRequest).permitAll() // Preflight 요청은 허용한다. https://velog.io/@jijang/%EC%82%AC%EC%A0%84-%EC%9A%94%EC%B2%AD-Preflight-request
-                //.mvcMatchers( "/members/signup", "/members/login", "/members/refreshToken").permitAll()
-                //.mvcMatchers(GET,"/**").hasAnyRole( "USER")
-                //.mvcMatchers(POST,"/**").hasAnyRole("USER", "ADMIN")
-                //.anyRequest().hasAnyRole("USER", "ADMIN"))
+        .requestMatchers(CorsUtils::isPreFlightRequest).permitAll() // Preflight 요청은 허용한다.
         .and()
         .exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(customAuthenticationEntryPoint))
         .apply(authenticationManagerConfig);
@@ -59,12 +55,13 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOrigin("*");
         config.addAllowedMethod("*");
+        config.addAllowedHeader("*"); // 없으면 CORS policy: Response to preflight 에러 생김.. 
         config.setAllowedMethods(List.of("GET","POST","DELETE","PATCH","OPTION","PUT"));
         source.registerCorsConfiguration("/**", config);
 
         return source;
     }
-
+	
     @Bean
     public BCryptPasswordEncoder encoder() {
 	// 비밀번호를 DB에 저장하기 전 사용할 암호화

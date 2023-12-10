@@ -9,7 +9,8 @@ import lombok.Getter;
 
 @Getter
 public class JwtAuthenticationToken extends AbstractAuthenticationToken {
-    private String token;
+    private static final long serialVersionUID = -6500075433459325567L;
+	private String token;
     private Object principal; // 로그인한 사용자 id , email
     private Object credentials;
 

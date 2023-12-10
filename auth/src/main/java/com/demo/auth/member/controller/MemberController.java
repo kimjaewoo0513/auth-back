@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Validated
 @SuppressWarnings("unchecked")
-@RequestMapping("/user")
+@RequestMapping("/member")
 public class MemberController {
 	
 	private final MemberService memberService;
@@ -35,26 +35,29 @@ public class MemberController {
 	@PostMapping("/login")
 	public ResponseEntity login(@RequestBody @Valid MemberLoginDto memberLoginDto, BindingResult bindingResult) {
 		log.info("===============   " + memberLoginDto.getEmail() + "   is trying to LOGIN");
-		if(bindingResult.hasErrors()){ // 입력값 검증
+		if(bindingResult.hasErrors()){ // Request값 검증
 			return new ResponseEntity(HttpStatus.BAD_REQUEST);
 		}
 		MemberLoginResponseDto memberLoginResponseDto = memberService.login(memberLoginDto); 
+		
 		return new ResponseEntity(memberLoginResponseDto, HttpStatus.OK);
 	}
 	
 	@DeleteMapping("/logout")
 	public ResponseEntity logout(@RequestBody RefreshTokenDto refreshTokenDto) {
 		memberService.logout(refreshTokenDto.getRefreshToken());
+		
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
 	@PostMapping("/signup")
 	public ResponseEntity signup(@RequestBody @Valid MemberSignupDto memberSignupDto , BindingResult bindingResult ) {
 		log.info("===============   " + memberSignupDto.getEmail() + "   is trying to SIGNUP");
-		if(bindingResult.hasErrors()){ // 입력값 검증
+		if(bindingResult.hasErrors()){ // Request값 검증
 			return new ResponseEntity(HttpStatus.BAD_REQUEST);
 		}
 		MemberSignupResponseDto memberSignupResponseDto = memberService.addMember(memberSignupDto);
+		
 		return new ResponseEntity(memberSignupResponseDto, HttpStatus.CREATED);
 	}
 }
