@@ -99,7 +99,7 @@ public class MemberService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .memberId(member.getMemberId())
-                .nickname(member.getName())
+                .name(member.getName())
                 .build();
         
         log.info(loginResponse.toString());
